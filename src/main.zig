@@ -10,7 +10,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    const noOfWorkers: u32 = 9;
+    const noOfWorkers: u32 = 3;
 
     var threadPool: ThreadPool = undefined;
     try threadPool.init(std.Thread.Pool.Options{ .allocator = allocator, .n_jobs = noOfWorkers });
@@ -34,7 +34,7 @@ const WordDictionary = struct {
         const dictFile = @embedFile(fileLocation);
         // @compileLog("the type of the file is {any} ", .{@typeInfo(@TypeOf(dictFile))});
         std.debug.print("the file lenght is {d} and the frst [0..30]m content is ->{s} +++ \n from the struct \n", .{ dictFile.len, dictFile[0..30] });
-        try HashMap.ensureTotalCapacity(allocator, 198_000);
+        try HashMap.ensureTotalCapacity(allocator, 200_000);
         // make a function that will return the NulChar and
         // try putTheWordsInTheHashMap(dictFile, allocator); // const lenOfLargestWord = this.getTheLenOfLargestWordInDict(dictFile);
         const indicesToGoToForWork = this.getDistributedWorkLocation(dictFile, noOfWorkers);
