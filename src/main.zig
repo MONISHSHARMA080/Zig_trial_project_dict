@@ -6,7 +6,7 @@ pub fn main() !void {
     var srtTime = try std.time.Timer.start();
     const dictFile = @embedFile("./cs50/dictionaries/large");
 
-    var gpa = std.heap.c_allocator(.{}){};
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
