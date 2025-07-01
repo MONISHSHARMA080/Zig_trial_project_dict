@@ -10,7 +10,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    const noOfWorkers: u32 = 3;
+    const noOfWorkers: u32 = 8;
 
     var threadPool: ThreadPool = undefined;
     try threadPool.init(std.Thread.Pool.Options{ .allocator = allocator, .n_jobs = noOfWorkers });
@@ -28,12 +28,11 @@ pub fn main() !void {
 
 const WordDictionary = struct {
     const this = @This();
-    var HashMap = std.hash_map.HashMapUnmanaged([:0]u8, bool, std.hash_map.StringContext, 92){};
+    var HashMap = std.hash_map.HashMapUnmanaged([]const u8, bool, std.hash_map.StringContext, 92){};
 
     pub fn openFileAndReturnsHashTableOfAllTheWords(comptime fileLocation: [:0]const u8, allocator: std.mem.Allocator, threadPool: *ThreadPool, comptime noOfWorkers: u32) !void {
         const dictFile = @embedFile(fileLocation);
         // @compileLog("the type of the file is {any} ", .{@typeInfo(@TypeOf(dictFile))});
-        std.debug.print("the file lenght is {d} and the frst [0..30]m content is ->{s} +++ \n from the struct \n", .{ dictFile.len, dictFile[0..30] });
         try HashMap.ensureTotalCapacity(allocator, 200_000);
         // make a function that will return the NulChar and
         // try putTheWordsInTheHashMap(dictFile, allocator); // const lenOfLargestWord = this.getTheLenOfLargestWordInDict(dictFile);
@@ -91,16 +90,23 @@ const WordDictionary = struct {
         defer wg.finish();
         var word: [59:0]u8 = undefined;
         var indexInWord: u32 = 0;
+        var isTheWordIn: ?bool = false;
         for (file, 0..) |value, i| {
             // we can't over index on the word array
             std.debug.assert(indexInWord <= word.len);
             if (value == 10) {
                 // got to a line break
                 word[indexInWord] = 0; // ascii for the null termination
-                print("at index:{d} we are at a linebreak ->{c}<-or in ascii val:{d} and putting nullTerminator the word var that is ->{s}<- to the hashMap \n\n", .{ i, value, value, word[0..indexInWord] });
+                print("at index:{d} we are at a linebreak ->{c}<-or in ascii val:{d} and putting nullTerminator the word var that is ->{s}<- or ascii of it is  word[0..{d} :0]:-->{d}<-- to the hashMap \n\n", .{ i, value, value, word[0..indexInWord], indexInWord, word[0..indexInWord :0] });
                 // put it in the hashMap
                 // try this.HashMap.put(alloc, &word, true);
                 this.HashMap.put(alloc, word[0..indexInWord :0], true) catch |e| std.debug.panic("\n the put call in the hashMap returned an error and we are not able to put stuff in the hashMap so we crash, error is ->{any} \n\n ", .{e});
+                isTheWordIn = this.HashMap.get(word[0..indexInWord :0]);
+                if (isTheWordIn) |a| {
+                    print("we got the word ->{s}<- from hashTable and it is ->{any} ++ \n\n ", .{ word[0..indexInWord :0], a });
+                } else {
+                    print("we dod not got the word ->{s}<- from hashTable ++ \n\n ", .{word[0..indexInWord :0]});
+                }
                 indexInWord = 0;
                 continue;
             } else {
@@ -151,3 +157,79 @@ const WordDictionary = struct {
         return largestValue;
     }
 };
+
+test "does the hashMap work by retreiving words" {
+    const dictFile = @embedFile("./cs50/dictionaries/large");
+
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
+
+    const noOfWorkers: u32 = 3;
+
+    var threadPool: ThreadPool = undefined;
+    try threadPool.init(std.Thread.Pool.Options{ .allocator = allocator, .n_jobs = noOfWorkers });
+    defer threadPool.deinit();
+
+    const dict = WordDictionary;
+    try dict.openFileAndReturnsHashTableOfAllTheWords("./cs50/dictionaries/large", allocator, &threadPool, noOfWorkers);
+    std.debug.print("the file lenght is {d} and the frst [0..50]m content is ->{s} ------\n  \n ", .{
+        dictFile.len,
+        dictFile[0..10],
+    });
+
+    print("\n\n--------------\n\n", .{});
+
+    print("the no of keys that I have got -> {d} \n", .{dict.HashMap.keyIterator().len});
+
+    var iterator = std.mem.splitScalar(u8, dictFile[dictFile.len - 90 .. dictFile.len - 1], '\n');
+    // while (iterator.next()) |a| {
+    //
+    // }
+    var i: u32 = 0;
+    var temp_word_buffer: [66:0]u8 = undefined;
+    while (iterator.next()) |char| {
+        print("at the word at index {d} ->{s}<-- and {d} \n ", .{ i, char, char });
+        std.debug.assert(char.len < 66);
+        @memcpy(temp_word_buffer[0..char.len], char);
+        temp_word_buffer[char.len] = 0;
+        // print("the word in temp_word_buffer is {s} or ascii version is {d} and the  full len is(including garbage value)->{s}  \n", .{ temp_word_buffer[0..temp_word_buffer.len :0], temp_word_buffer[0..temp_word_buffer.len :0], temp_word_buffer });
+        print("the word in temp_word_buffer(len:{d}) is {s} or ascii version is {d} and its actual content len is {d} \n \n", .{ temp_word_buffer[0..char.len :0].len, temp_word_buffer[0..char.len :0], temp_word_buffer[0..char.len :0], temp_word_buffer });
+        if (dict.HashMap.get(temp_word_buffer[0..char.len :0])) |_| {
+            print("the word:{s} is present in the dictionary as the return value is true :) \n ", .{char});
+        } else {
+            print("the word:{s} is not present in the dictionary as the return value is false ;)  \n ", .{char});
+        }
+        i += 1;
+    }
+
+    var valToCheck: [7:0]u8 = [_:0]u8{'p'} ** 7; // 6 characters + null terminator
+    @memcpy(valToCheck[0..6], "monish");
+    valToCheck[7] = 0; // null terminator
+    var res = dict.HashMap.get(&valToCheck);
+    if (res) |val| {
+        std.debug.print("the hashMap contains the ->{s}<- or ascii->{d}<-and it is {} \n", .{ valToCheck, valToCheck, val });
+    } else {
+        std.debug.print("the hashMap does not contain the value ->{s}<- or ascii ->{d}<- \n", .{ valToCheck, valToCheck });
+    }
+
+    @memcpy(valToCheck[0..6], "zygote");
+    valToCheck[6] = 0; // null terminator
+    res = dict.HashMap.get(&valToCheck);
+    if (res) |val| {
+        std.debug.print("the hashMap contains the ->{s}<- or ascii->{d}<-and it is {} \n", .{ valToCheck, valToCheck, val });
+    } else {
+        std.debug.print("the hashMap does not contain the value ->{s}<- or ascii ->{d}<- \n", .{ valToCheck, valToCheck });
+    }
+
+    var valToCheck1 = [_:0]u8{ 'c', 'a', 't' }; // 6 characters + null terminator
+    valToCheck1[3] = 0; // null terminator
+    res = dict.HashMap.get(&valToCheck1);
+    if (res) |val| {
+        std.debug.print("the hashMap contains the ->{s}<- or ascii->{d}<-and it is {} \n", .{ valToCheck1, valToCheck1, val });
+    } else {
+        std.debug.print("the hashMap does not contain the value ->{s}<- or ascii ->{d}<- \n", .{ valToCheck1, valToCheck1 });
+    }
+
+    defer dict.HashMap.deinit(allocator);
+}
