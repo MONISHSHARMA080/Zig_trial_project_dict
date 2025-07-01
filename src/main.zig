@@ -6,7 +6,7 @@ pub fn main() !void {
     var srtTime = try std.time.Timer.start();
     const dictFile = @embedFile("./cs50/dictionaries/large");
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.c_allocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
@@ -146,6 +146,7 @@ const WordDictionary = struct {
             largestValue = currentWordCount;
             std.debug.print("found the new largest word count and it is {d} and at the last index in the dictFile \n", .{largestValue});
         }
+
         currentWordCount = 0;
         return largestValue;
     }
