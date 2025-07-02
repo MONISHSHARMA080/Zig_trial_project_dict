@@ -65,7 +65,7 @@ pub fn getDictionary(comptime ResultType: type) type {
         }
 
         /// returns the nearest ascii 10 value's index #noOfWorkers times
-        fn getDistributedWorkLocation(comptime f: [:0]const u8, comptime noOfWorkers: u32) [noOfWorkers]u32 {
+        pub fn getDistributedWorkLocation(comptime f: [:0]const u8, comptime noOfWorkers: u32) [noOfWorkers]u32 {
             const workRange: u32 = f.len / noOfWorkers;
 
             // eg if the noOfWorkers = 5 I want a 5 values for each worker, eg 1,2,3,4,5 at index 4 or noOfWorkers - 1
@@ -120,13 +120,6 @@ pub fn getDictionary(comptime ResultType: type) type {
                     // try this.HashMap.put(alloc, &word, true);
                     // this.HashMap.put(alloc, word[0..indexInWord :0], true) catch |e| std.debug.panic("\n the put call in the hashMap returned an error and we are not able to put stuff in the hashMap so we crash, error is ->{any} \n\n ", .{e});
 
-                    // const key = self.hashMap.getKey(word[0..indexInWord :0]);
-                    // if (key) |k| {
-                    //     print("the key:{s} was already in the hashMap as it should not happen so we are crashing \n\n", .{k});
-                    //     unreachable;
-                    // } else {
-                    //     print("the key:{s} was not in the hashMap \n", .{word[0..indexInWord :0]});
-                    // }
                     self.hashMap.put(word[0..indexInWord :0], true) catch |e| {
                         print("reached the panic stage in the putting function and the error is {any}", .{e});
                         std.debug.panic("\n the put call in the hashMap returned an error and we are not able to put stuff in the hashMap so we crash, error is ->{any} \n\n ", .{e});
