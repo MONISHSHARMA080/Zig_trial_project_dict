@@ -143,11 +143,12 @@ test "are we able to get the words from the hash_map" {
         const word_to_search: [:0]const u8 = word_buffer[0..word_slice.len :0]; // Create a null-terminated slice
 
         const r = dict.getValueForKey(word_to_search); // Use the null-terminated slice
+        std.debug.assert(r.? == true); // if we do not have word in the dict then we failed
         if (r) |v| {
             print("the word from the iterator is {s} and is it in the dict ->{any}\n", .{ word_to_search, v });
             continue;
         }
-        std.debug.assert(r.? == true);
+        // std.debug.assert(r.? == true);
         print("the word from the iterator is {s} and is it in the dict ->{any}\n", .{ word_to_search, false });
         const isKeyThere = dict.hashMap.getKey(word_to_search); // Use the null-terminated slice
         if (isKeyThere) |y| {

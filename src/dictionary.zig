@@ -22,10 +22,10 @@ pub fn getDictionary(comptime ResultType: type) type {
         }
 
         pub fn deinit(self: *Self) void {
-            // var iterator = self.hashMap.iterator();
-            // while (iterator.next()) |entry| {
-            //     self.allocator.free(entry.key_ptr.*); // Free each key
-            // }
+            var iterator = self.hashMap.iterator();
+            while (iterator.next()) |entry| {
+                self.allocator.free(entry.key_ptr.*); // Free each key
+            }
             self.hashMap.deinit();
         }
 
@@ -55,7 +55,7 @@ pub fn getDictionary(comptime ResultType: type) type {
             //     // try threadPool.spawn(this.putTheWordsInTheHashMap, .{ dictFile[prevVal..value], allocator, &wg });
             //     try threadPool.spawn(Self.putTheWordsInTheHashMap, .{ self, dictFile[prevVal..value], &wg });
             //     //
-            //     wg.start();
+            wg.start();
             //     //
             //     prevVal = value;
             // }
