@@ -22,6 +22,10 @@ pub fn getDictionary(comptime ResultType: type) type {
         }
 
         pub fn deinit(self: *Self) void {
+            var iterator = self.hashMap.iterator();
+            while (iterator.next()) |entry| {
+                self.allocator.free(entry.key_ptr.*); // Free each key
+            }
             self.hashMap.deinit();
         }
 
@@ -120,7 +124,12 @@ pub fn getDictionary(comptime ResultType: type) type {
                     // try this.HashMap.put(alloc, &word, true);
                     // this.HashMap.put(alloc, word[0..indexInWord :0], true) catch |e| std.debug.panic("\n the put call in the hashMap returned an error and we are not able to put stuff in the hashMap so we crash, error is ->{any} \n\n ", .{e});
 
-                    self.hashMap.put(word[0..indexInWord :0], true) catch |e| {
+                    const key = self.allocator.dupe(u8, word[0..indexInWord]) catch |e| {
+                        print(" we got a error in allocating the string for the key and it is {any}  \n", .{e});
+                        std.debug.panic(" we got a error in allocating the string for the key and it is {any}  \n", .{e});
+                    };
+
+                    self.hashMap.put(key, true) catch |e| {
                         print("reached the panic stage in the putting function and the error is {any}", .{e});
                         std.debug.panic("\n the put call in the hashMap returned an error and we are not able to put stuff in the hashMap so we crash, error is ->{any} \n\n ", .{e});
                     };
