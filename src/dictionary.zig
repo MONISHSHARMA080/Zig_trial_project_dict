@@ -8,19 +8,24 @@ pub fn getDictionary(comptime ResultType: type) type {
         const Self = @This();
 
         // var HashMap = std.hash_map.HashMapUnmanaged([]const u8, bool, std.hash_map.StringContext, 92){};
-        hashMap: std.hash_map.StringHashMap(ResultType),
+        hashMap: std.StringArrayHashMap(ResultType),
+
         allocator: std.mem.Allocator,
 
         // returns a runtime instance of the object
         pub fn init(allocator: std.mem.Allocator) Self {
-            return Self{ .allocator = allocator, .hashMap = std.hash_map.StringHashMap(ResultType).init(allocator) };
+            return Self{ .allocator = allocator, .hashMap = std.StringArrayHashMap(ResultType).init(allocator) };
+        }
+
+        pub fn getValueForKey(self: *Self, key: []const u8) ?ResultType {
+            return self.hashMap.get(key);
         }
 
         pub fn deinit(self: *Self) void {
             self.hashMap.deinit();
         }
 
-        pub fn openFileAndReturnsHashTableOfAllTheWords(self: *Self, comptime fileLocation: [:0]const u8, threadPool: *ThreadPool, comptime noOfWorkers: u32) !void {
+        pub fn openFileAndReturnsHashTableOfAllTheWords(self: *Self, comptime fileLocation: [:0]const u8, _: *ThreadPool, comptime noOfWorkers: u32) !void {
             const dictFile = @embedFile(fileLocation);
 
             // @compileLog("the type of the file is {any} ", .{@typeInfo(@TypeOf(dictFile))});
@@ -34,24 +39,27 @@ pub fn getDictionary(comptime ResultType: type) type {
 
             print("the indices to go to the work is {any} \n", .{indicesToGoToForWork});
 
-            var prevVal: u32 = 0;
+            // var prevVal: u32 = 0;
 
             print("launching threadPool to put the words in the hashMap \n ", .{});
 
             var wg: std.Thread.WaitGroup = std.Thread.WaitGroup{};
+            //
+            // for (indicesToGoToForWork, 0..) |value, i| {
+            //     print("on index:{d} and dictFile[prevVal..value] --> dictFile[{d}..{d}] \n", .{ i, prevVal, value });
+            //
+            //     // try threadPool.spawn(this.putTheWordsInTheHashMap, .{ dictFile[prevVal..value], allocator, &wg });
+            //     try threadPool.spawn(Self.putTheWordsInTheHashMap, .{ self, dictFile[prevVal..value], &wg });
+            //
+            wg.start();
+            //
+            //     prevVal = value;
+            // }
+            //
 
-            for (indicesToGoToForWork, 0..) |value, i| {
-                print("on index:{d} and dictFile[prevVal..value] --> dictFile[{d}..{d}] \n", .{ i, prevVal, value });
+            // threadPool.waitAndWork(&wg);
 
-                // try threadPool.spawn(this.putTheWordsInTheHashMap, .{ dictFile[prevVal..value], allocator, &wg });
-                try threadPool.spawn(Self.putTheWordsInTheHashMap, .{ self, dictFile[prevVal..value], &wg });
-
-                wg.start();
-
-                prevVal = value;
-            }
-
-            threadPool.waitAndWork(&wg);
+            self.putTheWordsInTheHashMap(dictFile, &wg);
 
             print("the thread pool finished\n", .{});
         }
@@ -111,6 +119,14 @@ pub fn getDictionary(comptime ResultType: type) type {
                     // put it in the hashMap
                     // try this.HashMap.put(alloc, &word, true);
                     // this.HashMap.put(alloc, word[0..indexInWord :0], true) catch |e| std.debug.panic("\n the put call in the hashMap returned an error and we are not able to put stuff in the hashMap so we crash, error is ->{any} \n\n ", .{e});
+
+                    // const key = self.hashMap.getKey(word[0..indexInWord :0]);
+                    // if (key) |k| {
+                    //     print("the key:{s} was already in the hashMap as it should not happen so we are crashing \n\n", .{k});
+                    //     unreachable;
+                    // } else {
+                    //     print("the key:{s} was not in the hashMap \n", .{word[0..indexInWord :0]});
+                    // }
                     self.hashMap.put(word[0..indexInWord :0], true) catch |e| {
                         print("reached the panic stage in the putting function and the error is {any}", .{e});
                         std.debug.panic("\n the put call in the hashMap returned an error and we are not able to put stuff in the hashMap so we crash, error is ->{any} \n\n ", .{e});
