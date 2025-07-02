@@ -35,7 +35,7 @@ pub fn main() !void {
 
     const DictType = DictHashMap.getDictionary(bool);
     var dict = DictType.init(allocator);
-    try dict.hashMap.ensureTotalCapacity(195_000);
+    // try dict.hashMap.ensureTotalCapacity(195_000);
     defer dict.deinit();
     dict.openFileAndReturnsHashTableOfAllTheWords("./cs50/dictionaries/large", &threadPool, noOfWorkers) catch |e| {
         print("\n\n there is a error in the dict.openFileAndReturnsHashTableOfAllTheWords func and it is ->{any} \n", .{e});
