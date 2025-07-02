@@ -121,12 +121,8 @@ test "are we able to get the words from the hash_map" {
         return e;
     };
 
-    // const a = 8;
-    // const lastLineBreak = dict.getDistributedWorkLocation(dictFile, a)[a - 1];
     const a: u32 = 18;
-    // --- Change starts here ---
     const lastLineBreak = DictType.getDistributedWorkLocation(dictFile, a)[a - 1];
-    // --- Change ends here ---
     std.debug.print("--++----++----\n\n\n", .{});
 
     var iterator = std.mem.tokenizeScalar(u8, dictFile[lastLineBreak .. dictFile.len - 1], '\n');
@@ -151,6 +147,7 @@ test "are we able to get the words from the hash_map" {
             print("the word from the iterator is {s} and is it in the dict ->{any}\n", .{ word_to_search, v });
             continue;
         }
+        std.debug.assert(r.? == true);
         print("the word from the iterator is {s} and is it in the dict ->{any}\n", .{ word_to_search, false });
         const isKeyThere = dict.hashMap.getKey(word_to_search); // Use the null-terminated slice
         if (isKeyThere) |y| {
@@ -162,7 +159,8 @@ test "are we able to get the words from the hash_map" {
 
     print("\n\n----------------------------------- the keys in it are -----------\n\n ", .{});
     const keys = dict.hashMap.keys();
-    for (0..20) |i| {
+    std.debug.assert(keys.len > 30);
+    for (keys.len - 28..keys.len) |i| {
         std.debug.print("at index:{d} the key is:->{s}<-  or ascii ->{d}\n ", .{ i, keys[i], keys[i] });
     }
 }
