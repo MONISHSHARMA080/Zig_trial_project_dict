@@ -29,7 +29,7 @@ pub fn getDictionary(comptime ResultType: type) type {
             self.hashMap.deinit();
         }
 
-        pub fn openFileAndReturnsHashTableOfAllTheWords(self: *Self, comptime fileLocation: [:0]const u8, _: *ThreadPool, comptime noOfWorkers: u32) !void {
+        pub fn openFileAndReturnsHashTableOfAllTheWords(self: *Self, comptime fileLocation: [:0]const u8, threadPool: *ThreadPool, comptime noOfWorkers: u32) !void {
             const dictFile = @embedFile(fileLocation);
 
             // @compileLog("the type of the file is {any} ", .{@typeInfo(@TypeOf(dictFile))});
@@ -43,22 +43,22 @@ pub fn getDictionary(comptime ResultType: type) type {
 
             print("the indices to go to the work is {any} \n", .{indicesToGoToForWork});
 
-            // var prevVal: u32 = 0;
+            var prevVal: u32 = 0;
 
             print("launching threadPool to put the words in the hashMap \n ", .{});
 
             var wg: std.Thread.WaitGroup = std.Thread.WaitGroup{};
             //
-            // for (indicesToGoToForWork, 0..) |value, i| {
-            //     print("on index:{d} and dictFile[prevVal..value] --> dictFile[{d}..{d}] \n", .{ i, prevVal, value });
-            //
-            //     // try threadPool.spawn(this.putTheWordsInTheHashMap, .{ dictFile[prevVal..value], allocator, &wg });
-            //     try threadPool.spawn(Self.putTheWordsInTheHashMap, .{ self, dictFile[prevVal..value], &wg });
-            //
-            wg.start();
-            //
-            //     prevVal = value;
-            // }
+            for (indicesToGoToForWork, 0..) |value, i| {
+                print("on index:{d} and dictFile[prevVal..value] --> dictFile[{d}..{d}] \n", .{ i, prevVal, value });
+
+                // try threadPool.spawn(this.putTheWordsInTheHashMap, .{ dictFile[prevVal..value], allocator, &wg });
+                try threadPool.spawn(Self.putTheWordsInTheHashMap, .{ self, dictFile[prevVal..value], &wg });
+                //
+                wg.start();
+                //
+                prevVal = value;
+            }
             //
 
             // threadPool.waitAndWork(&wg);
