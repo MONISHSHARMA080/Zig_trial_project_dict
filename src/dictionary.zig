@@ -111,7 +111,7 @@ pub fn getDictionary(comptime ResultType: type) type {
             defer wg.finish();
             var word: [59:0]u8 = undefined;
             var indexInWord: u32 = 0;
-            var isTheWordIn: ?bool = false;
+            // var isTheWordIn: ?bool = false;
             for (file, 0..) |value, i| {
 
                 // we can't over index on the word array
@@ -133,12 +133,12 @@ pub fn getDictionary(comptime ResultType: type) type {
                         print("reached the panic stage in the putting function and the error is {any}", .{e});
                         std.debug.panic("\n the put call in the hashMap returned an error and we are not able to put stuff in the hashMap so we crash, error is ->{any} \n\n ", .{e});
                     };
-                    isTheWordIn = self.hashMap.get(word[0..indexInWord :0]);
-                    if (isTheWordIn) |a| {
-                        print("we got the word ->{s}<- from hashTable and it is ->{any} ++ \n\n ", .{ word[0..indexInWord :0], a });
-                    } else {
-                        print("we dod not got the word ->{s}<- from hashTable ++ \n\n ", .{word[0..indexInWord :0]});
-                    }
+                    // isTheWordIn = self.hashMap.get(word[0..indexInWord :0]);
+                    // if (isTheWordIn) |a| {
+                    //     print("we got the word ->{s}<- from hashTable and it is ->{any} ++ \n\n ", .{ word[0..indexInWord :0], a });
+                    // } else {
+                    //     print("we dod not got the word ->{s}<- from hashTable ++ \n\n ", .{word[0..indexInWord :0]});
+                    // }
                     indexInWord = 0;
                     continue;
                 } else {
